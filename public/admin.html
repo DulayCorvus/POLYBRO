@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PolyBro — Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --ink:#0B1D33;
+  --panel:#0F2440;
+  --panel-2:#122a4a;
+  --grid:#1D3A54;
+  --cyan:#4FD1E8;
+  --cyan-dim:#2b6b78;
+  --paper:#EDEFF2;
+  --paper-dim:#9FB2C6;
+  --amber:#F5A623;
+  --green:#6FCF97;
+  --red:#EF6F6C;
+  --purple:#b78cf5;
+  --pink:#f2789f;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+    var(--ink);
+  color:var(--paper);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+}
+body::before{
+  content:"";position:fixed;inset:0;
+  background: radial-gradient(circle at 15% 10%, rgba(79,209,232,0.06), transparent 40%);
+  pointer-events:none;
+}
+h1,h2,h3{font-family:'JetBrains Mono',monospace;letter-spacing:0.02em;}
+code{font-family:'IBM Plex Mono',monospace;}
+::selection{background:var(--cyan);color:var(--ink);}
+button{font-family:'Inter',sans-serif;cursor:pointer;border:none;}
+button:focus-visible, input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+
+/* ---------- login (copied from index.html's .login-card) ---------- */
+.login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.login-card{
+  background:var(--panel);border:1px solid var(--grid);border-radius:14px;padding:36px 34px;
+  width:360px;text-align:center;position:relative;overflow:hidden;
+}
+.login-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));}
+.login-card h1{font-size:20px;margin:0 0 4px;color:var(--paper);}
+.login-card .sub{font-size:12px;color:var(--paper-dim);margin-bottom:6px;}
+.login-card input{
+  width:100%;box-sizing:border-box;background:var(--ink);border:1px solid var(--grid);border-radius:8px;
+  padding:11px 14px;color:var(--paper);font-family:'Inter';font-size:14px;margin:10px 0 0;
+}
+.login-card input:focus{outline:none;border-color:var(--cyan);}
+.auth-error{font-size:11.5px;color:var(--red);margin-top:10px;line-height:1.5;min-height:0;}
+
+/* ---------- denied ---------- */
+.denied-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.denied-card{
+  background:var(--panel);border:1px solid var(--grid);border-radius:14px;padding:30px 32px;
+  width:380px;text-align:center;color:var(--paper-dim);font-size:13.5px;line-height:1.6;
+}
+.denied-card code{background:#081625;padding:1px 6px;border-radius:4px;color:var(--cyan);}
+
+/* ---------- shell (copied from index.html's .dash-shell) ---------- */
+.dash-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+.dash-nav{border-right:1px solid var(--grid);padding:18px 14px;display:flex;flex-direction:column;}
+.dash-profile{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--panel-2);margin-bottom:18px;}
+.dash-profile .av{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--amber));flex-shrink:0;}
+.dash-profile span{font-size:12.5px;color:var(--paper);font-family:'JetBrains Mono';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dash-nav-section{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--paper-dim);margin:4px 0 6px 10px;}
+.dash-navitem{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;color:var(--paper-dim);
+  font-size:13px;cursor:pointer;margin-bottom:2px;
+}
+.dash-navitem:hover{background:var(--panel-2);color:var(--paper);}
+.dash-navitem.active{background:rgba(79,209,232,0.1);color:var(--cyan);}
+.dash-main{padding:30px 40px;overflow-y:auto;max-height:100vh;}
+.dash-main h1{font-size:26px;margin:0 0 6px;color:var(--paper);}
+.dash-main .sub{font-size:13.5px;color:var(--paper-dim);margin-bottom:26px;}
+
+/* ---------- card (copied from index.html's .card, with data-tag label) ---------- */
+.card{
+  background:var(--panel);border:1px solid var(--grid);border-radius:10px;padding:20px;margin:0 0 18px;
+  position:relative;
+}
+.card::before{
+  content:attr(data-tag);position:absolute;top:-9px;left:14px;background:var(--ink);
+  padding:0 6px;font-size:10px;font-family:'IBM Plex Mono';color:var(--cyan);letter-spacing:0.08em;text-transform:uppercase;
+}
+.card h2{font-size:14px;margin:0 0 14px;color:var(--paper);font-family:'JetBrains Mono';}
+.muted{color:var(--paper-dim);font-size:13px;}
+
+/* ---------- stat grid (copied from index.html's .stat/.landing-stats pattern) ---------- */
+.stat-grid{display:flex;gap:24px;flex-wrap:wrap;}
+.stat{display:flex;flex-direction:column;align-items:flex-start;}
+.stat .v{font-family:'JetBrains Mono';font-weight:700;font-size:22px;color:var(--cyan);}
+.stat .l{font-size:10px;color:var(--paper-dim);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;}
+
+/* ---------- mastery bars (copied from index.html's .mastery-row) ---------- */
+.mastery-row{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--grid);}
+.mastery-row:last-child{border-bottom:none;}
+.mastery-row .lbl{width:110px;flex-shrink:0;font-size:13px;color:var(--paper);}
+.mastery-row .track{flex:1;height:8px;background:var(--grid);border-radius:4px;overflow:hidden;}
+.mastery-row .track>div{height:100%;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));}
+.mastery-row .pct{width:110px;flex-shrink:0;text-align:right;font-size:11.5px;font-family:'JetBrains Mono';color:var(--paper-dim);}
+
+/* ---------- tables (copied from index.html's .lb-table) ---------- */
+.lb-table{width:100%;border-collapse:collapse;}
+.lb-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--paper-dim);padding:8px 12px;border-bottom:1px solid var(--grid);}
+.lb-table td{padding:11px 12px;font-size:13px;color:var(--paper);border-bottom:1px solid var(--grid);}
+.lb-table tr:last-child td{border-bottom:none;}
+.lb-table .bar-track{background:var(--ink);border-radius:4px;height:6px;width:100%;overflow:hidden;}
+.lb-table .bar-fill{background:var(--amber);height:100%;}
+
+/* ---------- shared btn (copied from index.html's .btn) ---------- */
+.btn{
+  padding:9px 16px;border-radius:7px;font-size:13px;font-weight:600;font-family:'IBM Plex Mono';
+  border:1px solid var(--grid);background:var(--panel-2);color:var(--paper);width:100%;
+}
+.btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.btn.primary{background:var(--cyan);border-color:var(--cyan);color:#04141f;margin-top:16px;}
+.btn.primary:hover{background:#6fe0f2;color:#04141f;}
+
+@media (max-width:900px){
+  .dash-shell{grid-template-columns:1fr;}
+  .dash-nav{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <h1>Admin sign in</h1>
+    <div class="sub">PolyBro analytics</div>
+    <input id="admin-email" type="email" placeholder="Email">
+    <input id="admin-password" type="password" placeholder="Password">
+    <button class="btn primary" onclick="doSignIn()">Sign in</button>
+    <div id="err" class="auth-error"></div>
+  </div>
+</div>
+
+<div id="denied" class="denied-screen" style="display:none;">
+  <div class="denied-card">
+    Signed in, but this account isn't on the admin allowlist.
+    <div style="margin-top:10px;">
+      Ask whoever manages the Firestore project to add an <code>admins/&lt;your uid&gt;</code> doc.
+    </div>
+  </div>
+</div>
+
+<div class="dash-shell" id="app" style="display:none;">
+  <div class="dash-nav">
+    <div class="dash-profile">
+      <div class="av"></div>
+      <span>Admin</span>
+    </div>
+    <div class="dash-nav-section">Tracks</div>
+    <div class="dash-navitem active" id="tab-cpp" onclick="switchTrack('cpp')">C++ track</div>
+    <div class="dash-navitem" id="tab-htmlcss" onclick="switchTrack('htmlcss')">HTML/CSS track</div>
+  </div>
+  <div class="dash-main">
+    <h1>Learner analytics</h1>
+    <div class="sub">Read-only, aggregate only. No per-learner drill-down, no write paths.</div>
+    <div id="content">Loading…</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===========================================================================
+   admin.html — Tier A read-only analytics dashboard.
+
+   Separate bundle from cpp.html / htmlcss_1.html on purpose: no dependency
+   on core.js or either host page's inline script, so the learner-facing
+   bundles stay free of admin code/strings. Duplicates only the tiny BADGES
+   id/icon/label metadata below (not the content-heavy CHAPTERS/QUIZZES/
+   PROJECTS arrays) — this dashboard reports on whatever tags/chapterIds
+   actually show up in the data rather than resolving them against a
+   specific track's content, so it stays decoupled from both tracks'
+   content and doesn't need updating when lessons/quizzes change.
+
+   Gating: sign in with the same Firebase project both learner pages use,
+   then check for an admins/{uid} allowlist doc. The Firestore rules (see
+   firestore.rules) enforce this server-side too — this client-side check
+   is UX only, not the actual security boundary.
+
+   Tracks are separate Firestore collections in this project:
+     cpp track:      progress       / leaderboard
+     htmlcss track:  progress_htmlcss / leaderboard_htmlcss
+   Only `progress`/`progress_htmlcss` are read here — this dashboard reads
+   full STATE docs (that's what "list" access as an admin grants), not the
+   denormalized leaderboard docs.
+
+   Styling: copied verbatim from index.html's design tokens (--ink/--panel/
+   --grid/--cyan/etc, JetBrains Mono + Inter + IBM Plex Mono, the dotted-grid
+   body background) and reuses index.html's actual component classes
+   (.login-card, .dash-shell/.dash-nav/.dash-navitem, .card with its
+   data-tag corner label, .mastery-row, .lb-table, .btn) rather than
+   inventing new ones, so this page looks like part of the same app.
+   =========================================================================== */
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC--D4VKQf07rPkFTeUw9p01YVWMy6DtWs",
+  authDomain: "cppbro-23.firebaseapp.com",
+  projectId: "cppbro-23",
+  storageBucket: "cppbro-23.firebasestorage.app",
+  messagingSenderId: "662822687783",
+  appId: "1:662822687783:web:a40751e3b964397cb16a02"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const fbAuth = firebase.auth();
+const fbDb = firebase.firestore();
+
+// Small metadata-only duplicate of core.js's BADGES catalog (id/icon/label),
+// not the check() logic — just enough to label unlock-rate rows below.
+const BADGE_META = [
+  { id:'first_run', icon:'▶️', label:'Hello, World' },
+  { id:'first_autocomplete', icon:'⌨️', label:'Shortcut Savvy' },
+  { id:'first_xp', icon:'✨', label:'First Steps' },
+  { id:'xp_500', icon:'🔥', label:'Grinding' },
+  { id:'xp_2000', icon:'💎', label:'Dedicated' },
+  { id:'streak_3', icon:'📅', label:'Building a Habit' },
+  { id:'streak_7', icon:'🗓️', label:'One Week Strong' },
+  { id:'streak_30', icon:'🏆', label:'Unstoppable' },
+  { id:'first_lesson', icon:'📘', label:'Lesson One' },
+  { id:'lessons_10', icon:'📚', label:'Bookworm' },
+  { id:'first_project', icon:'🛠️', label:'Builder' },
+  { id:'projects_5', icon:'🏗️', label:'Portfolio' },
+  { id:'perfect_quiz', icon:'🎯', label:'Perfect Score' },
+  { id:'quiz_5', icon:'🧠', label:'Quiz Regular' },
+  { id:'machine_1', icon:'⚙️', label:'Debugger' },
+  { id:'machine_10', icon:'🤖', label:'Machine Whisperer' },
+  { id:'mastery_80', icon:'⭐', label:'Getting Sharp' },
+  { id:'mastery_well_rounded', icon:'👑', label:'Well Rounded' }
+];
+
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function daysBetween(a, b){
+  return Math.round((new Date(b+'T00:00:00Z') - new Date(a+'T00:00:00Z')) / 86400000);
+}
+function masteryLabel(pct){
+  if(pct>=90) return 'Mastered';
+  if(pct>=70) return 'Advanced';
+  if(pct>=35) return 'Building';
+  if(pct>0) return 'Started';
+  return 'Not started';
+}
+function pct(n, d){ return d ? Math.round((n/d)*100) : 0; }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let currentTrack = 'cpp';
+let dataCache = { cpp: null, htmlcss: null }; // {docs:[...]} per track, fetched once and reused across tab switches
+
+function doSignIn(){
+  const email = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value;
+  const err = document.getElementById('err');
+  err.textContent = '';
+  fbAuth.signInWithEmailAndPassword(email, password).catch(e=>{
+    err.textContent = (e && e.message) ? e.message : 'Sign-in failed.';
+  });
+}
+
+fbAuth.onAuthStateChanged(async (user)=>{
+  if(!user){
+    document.getElementById('login-screen').style.display = 'block';
+    document.getElementById('denied').style.display = 'none';
+    document.getElementById('app').style.display = 'none';
+    return;
+  }
+  document.getElementById('login-screen').style.display = 'none';
+  let isAdmin = false;
+  try{
+    const doc = await fbDb.collection('admins').doc(user.uid).get();
+    isAdmin = doc.exists;
+  }catch(e){
+    // rules deny read for a non-admin uid — that failure itself means "not admin"
+    isAdmin = false;
+  }
+  if(!isAdmin){
+    document.getElementById('denied').style.display = 'block';
+    return;
+  }
+  document.getElementById('app').style.display = 'block';
+  loadTrack('cpp');
+});
+
+function switchTrack(track){
+  currentTrack = track;
+  document.getElementById('tab-cpp').classList.toggle('active', track==='cpp');
+  document.getElementById('tab-htmlcss').classList.toggle('active', track==='htmlcss');
+  loadTrack(track);
+}
+
+async function loadTrack(track){
+  document.getElementById('content').innerHTML = 'Loading…';
+  if(!dataCache[track]){
+    const collectionName = track==='cpp' ? 'progress' : 'progress_htmlcss';
+    try{
+      const snap = await fbDb.collection(collectionName).get();
+      dataCache[track] = snap.docs.map(d=>d.data());
+    }catch(e){
+      document.getElementById('content').innerHTML =
+        '<div class="card muted">Couldn\'t load this track — ' + escapeHtml(e.message||String(e)) + '</div>';
+      return;
+    }
+  }
+  render(dataCache[track]);
+}
+
+function render(learners){
+  const n = learners.length;
+  if(n===0){
+    document.getElementById('content').innerHTML = '<div class="card muted">No learners yet on this track.</div>';
+    return;
+  }
+
+  const today = todayKey();
+  let activeToday=0, activeWeek=0, lapsed=0;
+  let sumXp=0, sumStreak=0, sumDaily=0;
+  const masteryBuckets = {'Not started':0,'Started':0,'Building':0,'Advanced':0,'Mastered':0};
+  const quizByTag = {}; // chapterId -> {sum,count}
+  const badgeCounts = {}; // badgeId -> count
+  let masteryTagCount = 0;
+
+  learners.forEach(s=>{
+    sumXp += s.xp||0;
+    sumStreak += s.streak||0;
+    sumDaily += s.dailyStreak||0;
+
+    if(s.lastActiveDate){
+      const d = daysBetween(s.lastActiveDate, today);
+      if(d<=0) activeToday++;
+      if(d<=6) activeWeek++;
+      if(d>13) lapsed++;
+    } else {
+      lapsed++;
+    }
+
+    Object.values(s.mastery||{}).forEach(v=>{
+      masteryBuckets[masteryLabel(v)]++;
+      masteryTagCount++;
+    });
+
+    Object.entries(s.quizBest||{}).forEach(([tag,v])=>{
+      if(v==null) return;
+      if(!quizByTag[tag]) quizByTag[tag] = {sum:0,count:0};
+      quizByTag[tag].sum += v;
+      quizByTag[tag].count++;
+    });
+
+    (s.badges||[]).forEach(id=>{ badgeCounts[id] = (badgeCounts[id]||0) + 1; });
+  });
+
+  const quizRows = Object.entries(quizByTag)
+    .map(([tag,{sum,count}])=>({tag, avg:Math.round(sum/count), count}))
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,12);
+
+  const html = `
+    <div class="card" data-tag="Overview">
+      <h2>${n} learner${n===1?'':'s'}</h2>
+      <div class="stat-grid">
+        <div class="stat"><div class="v">${activeToday}</div><div class="l">Active today</div></div>
+        <div class="stat"><div class="v">${activeWeek}</div><div class="l">Active this week</div></div>
+        <div class="stat"><div class="v">${lapsed}</div><div class="l">Lapsed 13d+</div></div>
+        <div class="stat"><div class="v">${Math.round(sumXp/n)}</div><div class="l">Avg XP</div></div>
+        <div class="stat"><div class="v">${(sumStreak/n).toFixed(1)}</div><div class="l">Avg streak</div></div>
+        <div class="stat"><div class="v">${(sumDaily/n).toFixed(1)}</div><div class="l">Avg daily streak</div></div>
+      </div>
+    </div>
+
+    <div class="card" data-tag="Mastery">
+      <h2>Distribution across ${masteryTagCount} tag-attempts</h2>
+      ${masteryTagCount===0 ? '<div class="muted">No mastery data yet.</div>' :
+        Object.entries(masteryBuckets).map(([label,count])=>`
+          <div class="mastery-row">
+            <div class="lbl">${label}</div>
+            <div class="track"><div style="width:${pct(count,masteryTagCount)}%"></div></div>
+            <div class="pct">${count} · ${pct(count,masteryTagCount)}%</div>
+          </div>
+        `).join('')}
+    </div>
+
+    <div class="card" data-tag="Quizzes">
+      <h2>Score averages by tag (top 12 by attempts)</h2>
+      ${quizRows.length===0 ? '<div class="muted">No quiz attempts yet.</div>' : `
+      <table class="lb-table">
+        <tr><th>Tag</th><th>Avg score</th><th>Learners attempted</th></tr>
+        ${quizRows.map(r=>`<tr><td>${escapeHtml(r.tag)}</td><td>${r.avg}%</td><td>${r.count}</td></tr>`).join('')}
+      </table>`}
+    </div>
+
+    <div class="card" data-tag="Badges">
+      <h2>Unlock rates</h2>
+      <table class="lb-table">
+        <tr><th>Badge</th><th>Unlocked by</th><th style="width:120px;"></th></tr>
+        ${BADGE_META.map(b=>{
+          const count = badgeCounts[b.id]||0;
+          return `<tr>
+            <td>${b.icon} ${escapeHtml(b.label)}</td>
+            <td>${count} / ${n} · ${pct(count,n)}%</td>
+            <td><div class="bar-track"><div class="bar-fill" style="width:${pct(count,n)}%"></div></div></td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>
+  `;
+  document.getElementById('content').innerHTML = html;
+}
+</script>
+</body>
+</html>
